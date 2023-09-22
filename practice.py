@@ -117,5 +117,6 @@ print(ft.view(1, -1).shape)
 #%%
 print(ft.unsqueeze(1)) # 1 -> dim = 1 과 동일 / 차원 크기 (3, 1)
 print(ft.unsqueeze(1).shape)
-
-
+print("1")
+print("1")
+# %%
