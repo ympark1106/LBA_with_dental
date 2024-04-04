@@ -2,18 +2,14 @@ import torch
 import numpy as np
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 import matplotlib.pyplot as plt
-# from model_dino_vit14b import CustomDINOV2
-from model_dino import CustomDINOV2
+from LBA.disease_detection_MultiLabelCL.model_resnet50 import ResNet50
 import pandas as pd
-from sklearn.metrics import hamming_loss
-from loader_dino_9 import test_loader # 수정
+# from loader_dino_augment import test_loader # 수정
+from loader_label_5_order import test_loader
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-model = CustomDINOV2(num_classes=9).to(device)
-
-# 수정
-model_save_path = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/disease_detection_MultiLabelCL/saved_dinov2_margin150/model_epoch_30.pth'
+model = ResNet50().to(device)
+model_save_path = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/disease_detection_MultiLabelCL/saved_resnet50_margin90_5class_0401/model_epoch_30.pth'
 checkpoint = torch.load(model_save_path)
 model.load_state_dict(checkpoint['model_state_dict'])
 
@@ -63,11 +59,8 @@ plt.title('Precision, Recall, F1-Score, and Accuracy for Each Label')
 plt.savefig('metrics_scores_0326.png')
 plt.close()
 
-hamming_loss_value = hamming_loss(all_labels, all_preds)
 
-print("Hamming Loss:")
-print(f"Hamming Loss: {hamming_loss_value:.4f}")
-
+# 마이크로 평균 및 매크로 평균 계산
 precision_micro = precision_score(all_labels, all_preds, average='micro')
 recall_micro = recall_score(all_labels, all_preds, average='micro')
 f1_micro = f1_score(all_labels, all_preds, average='micro')
@@ -86,9 +79,9 @@ print(f"Macro Precision: {precision_macro:.4f}")
 print(f"Macro Recall: {recall_macro:.4f}")
 print(f"Macro F1-Score: {f1_macro:.4f}")
 
-metrics_df.loc['Micro Average'] = [precision_micro, recall_micro, f1_micro, np.nan] 
+# 기존의 성능 메트릭 데이터프레임에 마이크로 평균 및 매크로 평균 추가
+metrics_df.loc['Micro Average'] = [precision_micro, recall_micro, f1_micro, np.nan] # Accuracy는 마이크로 평균에서 의미가 없으므로 NaN으로 설정
 metrics_df.loc['Macro Average'] = [precision_macro, recall_macro, f1_macro, np.nan]
-metrics_df.loc['Hamming Loss'] = [np.nan, np.nan, np.nan, hamming_loss_value]
 
 print(metrics_df)
 

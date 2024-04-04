@@ -6,8 +6,8 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import Compose, Resize, ToTensor, Normalize, ColorJitter, RandomHorizontalFlip, RandomRotation
 from loader_label_9_order_90 import TeethDataset, split_data   # 수정
 from loader_label_9_order_90 import transforms     # 수정
-from model import ResNet50 
-from model_densenet import DenseNet121
+from LBA.disease_detection_MultiLabelCL.model_resnet50 import ResNet50 
+from LBA.disease_detection_MultiLabelCL.model_densenet121 import DenseNet121
 from torchmetrics.classification import MultilabelConfusionMatrix
 # from utils import EarlyStopping  
 from torch.utils.data import random_split
@@ -29,6 +29,7 @@ parent_dir = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/cropped_im
 categories = ['cropped_K00_images', 'cropped_K01_images', 'cropped_K02_images', 'cropped_K03_images', 'cropped_K04_images', 
                     'cropped_K05_images', 'cropped_K07_images', 'cropped_K08_images', 'cropped_K09_images'] # 9개의 카테고리
 
+
 split_ratios = {'train': 0.7, 'val': 0.15, 'test': 0.15}
 
 train_files, train_labels, val_files, val_labels, test_files, test_labels = split_data(parent_dir, categories, split_ratios)
@@ -41,9 +42,11 @@ train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
-model = DenseNet121().to(device)
+model = ResNet50().to(device)
+# model = DenseNet121().to(device)
 
 criterion = nn.BCEWithLogitsLoss()
+# criterion = AsymmetricLossOptimized()
 optimizer = Adam(model.parameters(), lr=0.00001)
 confmat = MultilabelConfusionMatrix(num_labels=9) # 수정 필요
 
@@ -79,7 +82,7 @@ def print_confusion_matrix(confmat):
     print(cm)
     confmat.reset() 
 
-model_save_directory = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/disease_detection_MultiLabelCL/saved_densenet121_margin90'
+model_save_directory = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/disease_detection_MultiLabelCL/saved_resnet50_margin90'
 if not os.path.exists(model_save_directory):
     os.makedirs(model_save_directory)
 

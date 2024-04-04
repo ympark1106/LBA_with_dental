@@ -6,9 +6,6 @@ from torchvision import transforms
 from model_dino_vit14b import CustomDINOV2
 from torchvision.models import vit_b_16, ViT_B_16_Weights
 
-
-
-
 def preprocess_image(image_path):
     preprocess = transforms.Compose([
         transforms.Resize((224, 224)),

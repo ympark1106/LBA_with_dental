@@ -2,7 +2,7 @@ import torch
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.metrics import multilabel_confusion_matrix
-from model import ResNet50
+from LBA.disease_detection_MultiLabelCL.model_resnet50 import ResNet50
 # from model_densenet import DenseNet121
 from loader_label_9_order import test_loader  # 수정
 import numpy as np

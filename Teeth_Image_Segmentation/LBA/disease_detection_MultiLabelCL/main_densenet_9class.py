@@ -4,9 +4,10 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose, Resize, ToTensor, Normalize, ColorJitter, RandomHorizontalFlip, RandomRotation
-from loader_dino_5class import TeethDataset, split_data   # 수정
-from loader_dino_5class import transforms    # 수정
-from model_dino_vit14b_patchlevel import CustomDINOV2   # 수정
+from loader_label_9_order_90 import TeethDataset, split_data   # 수정
+from loader_label_9_order_90 import transforms     # 수정
+from LBA.disease_detection_MultiLabelCL.model_resnet50 import ResNet50 
+from LBA.disease_detection_MultiLabelCL.model_densenet121 import DenseNet121
 from torchmetrics.classification import MultilabelConfusionMatrix
 # from utils import EarlyStopping  
 from torch.utils.data import random_split
@@ -17,18 +18,16 @@ from PIL import Image
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-transform = Compose([
-    Resize((224, 224)),  
-    ToTensor(),
-    Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
 
-parent_dir = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/cropped_images/margin150'
-# categories = ['cropped_K00_images', 'cropped_K01_images', 'cropped_K02_images', 'cropped_K03_images', 'cropped_K04_images', 
-#                     'cropped_K05_images', 'cropped_K07_images', 'cropped_K08_images', 'cropped_K09_images'] # 9개의 카테고리
-categories = ['cropped_K01_images', 'cropped_K02_images', 
-                    'cropped_K05_images', 'cropped_K08_images', 'cropped_K09_images'] # 5개의 카테고리
+parent_dir = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/cropped_images/margin90'
+categories = ['cropped_K00_images', 'cropped_K01_images', 'cropped_K02_images', 'cropped_K03_images', 'cropped_K04_images', 
+                    'cropped_K05_images', 'cropped_K07_images', 'cropped_K08_images', 'cropped_K09_images'] # 9개의 카테고리
 
 split_ratios = {'train': 0.7, 'val': 0.15, 'test': 0.15}
 
@@ -42,12 +41,11 @@ train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
-model = CustomDINOV2(num_classes=5, num_patches=196, hidden_dim=768).to(device)
-
+model = DenseNet121().to(device)
 
 criterion = nn.BCEWithLogitsLoss()
-optimizer = Adam(model.parameters(), lr=0.000005)
-confmat = MultilabelConfusionMatrix(num_labels=5) # 수정 필요
+optimizer = Adam(model.parameters(), lr=0.00001)
+confmat = MultilabelConfusionMatrix(num_labels=9) # 수정 필요
 
 def evaluate_model(model, dataloader, criterion, device, confmat=None):
     model.eval()
@@ -81,7 +79,7 @@ def print_confusion_matrix(confmat):
     print(cm)
     confmat.reset() 
 
-model_save_directory = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/disease_detection_MultiLabelCL/saved_dinovit14b_margin150_5class_patch' # 'saved_dinovit14b
+model_save_directory = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/disease_detection_MultiLabelCL/saved_densenet121_margin90'
 if not os.path.exists(model_save_directory):
     os.makedirs(model_save_directory)
 
@@ -112,13 +110,12 @@ for epoch in range(30):
 
     val_loss, val_acc = evaluate_model(model, val_loader, criterion, device, confmat)
 
-  
-    val_confmat = MultilabelConfusionMatrix(num_labels=5)
+    val_confmat = MultilabelConfusionMatrix(num_labels=9) #수정
     val_loss, val_acc = evaluate_model(model, val_loader, criterion, device, val_confmat)
     print("Validation Confusion Matrix:")
     print_confusion_matrix(val_confmat)
 
-    model_save_name = f'model_epoch_{epoch+1}_valloss_{val_loss}_valacc_{val_acc}.pth'
+    model_save_name = f'model_epoch_{epoch+1}.pth'
     model_save_path = os.path.join(model_save_directory, model_save_name)
     torch.save({
         'model_state_dict': model.state_dict(),
@@ -139,9 +136,15 @@ final_model_path = os.path.join(model_save_directory, 'final_model.pth')
 torch.save(model.state_dict(), final_model_path)
 print(f"Model saved to {final_model_path}")
 
-test_confmat = MultilabelConfusionMatrix(num_labels=5)
+test_confmat = MultilabelConfusionMatrix(num_labels=9) # 수정
 test_loss, test_acc = evaluate_model(model, test_loader, criterion, device, test_confmat)
 print("Test Confusion Matrix:")
 print_confusion_matrix(test_confmat)
 print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.4f}")
+
+
+
+
+
+
 

@@ -2,7 +2,7 @@ from pytorch_grad_cam import GradCAM, HiResCAM, ScoreCAM, GradCAMPlusPlus, Ablat
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
 # from torchvision.models import resnet50
-from model import resnet50
+from LBA.disease_detection_MultiLabelCL.model_resnet50 import resnet50
 import torchvision
 import matplotlib.pyplot as plt
 from PIL import Image

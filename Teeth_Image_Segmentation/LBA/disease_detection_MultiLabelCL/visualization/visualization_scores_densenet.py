@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 import matplotlib.pyplot as plt
-from model_densenet import DenseNet121
+from LBA.disease_detection_MultiLabelCL.model_densenet121 import DenseNet121
 import pandas as pd
 from loader_label_5_order import test_loader
 

@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import Compose, Resize, ToTensor, Normalize, ColorJitter, RandomHorizontalFlip, RandomRotation
 from loader_dino_5class import TeethDataset, split_data   # 수정
 from loader_dino_5class import transforms    # 수정
-from model_dino import CustomDINOV2    # 수정
+from LBA.disease_detection_MultiLabelCL.model_dino_vit4s import CustomDINOV2    # 수정
 from torchmetrics.classification import MultilabelConfusionMatrix
 # from utils import EarlyStopping  
 from torch.utils.data import random_split

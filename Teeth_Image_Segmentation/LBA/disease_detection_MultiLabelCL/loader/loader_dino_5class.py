@@ -18,36 +18,12 @@ class TeethDataset(Dataset):
             transforms.RandomHorizontalFlip(),
             # transforms.RandomRotation(20),
         ])
-        
-    #     self.class_counts = np.sum(labels, axis=0)
-    #     self.max_count = np.max(self.class_counts)
-        
-    #     self.oversampled_indices = self._calculate_oversampled_indices(labels)
-
-    # def _calculate_oversampled_indices(self, labels):
-    #     indices = np.arange(len(labels))
-    #     oversampled_indices = []
-
-    #     for i, count in enumerate(self.class_counts):
-    #         class_indices = indices[labels[:, i] == 1]
-    #         oversample_count = self.max_count - count
-            
-    #         if oversample_count > 0:
-    #             oversampled_class_indices = np.random.choice(class_indices, size=oversample_count, replace=True)
-    #             class_indices = np.concatenate([class_indices, oversampled_class_indices])
-            
-    #         oversampled_indices.extend(class_indices.tolist())
-        
-    #     return np.array(oversampled_indices)
+    
 
     def __len__(self):
         return len(self.file_paths)
 
     def __getitem__(self, idx):
-        # actual_idx = self.oversampled_indices[idx]
-        # img_path = self.file_paths[actual_idx]
-        # image = Image.open(img_path).convert('RGB')
-        # label = self.labels[actual_idx]
         img_path = self.file_paths[idx]
         image = Image.open(img_path).convert('RGB')
         label = self.labels[idx]
@@ -127,7 +103,7 @@ def split_data(parent_dir, categories, split_ratios):
     return train_files, np.array(train_labels), val_files, np.array(val_labels), test_files, np.array(test_labels)
 
 
-parent_dir = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/cropped_images/margin90'
+parent_dir = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/cropped_images/margin150'
 # categories = ['cropped_K00_images', 'cropped_K01_images', 'cropped_K02_images', 'cropped_K03_images', 'cropped_K04_images', 
 #               'cropped_K05_images', 'cropped_K07_images', 'cropped_K08_images', 'cropped_K09_images']
 categories = ['cropped_K01_images', 'cropped_K02_images', 

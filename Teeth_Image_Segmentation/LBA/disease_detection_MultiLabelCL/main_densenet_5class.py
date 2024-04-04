@@ -3,11 +3,11 @@ import torch
 import torch.nn as nn
 from torch.optim import Adam
 from torch.utils.data import DataLoader
-from torchvision.transforms import ToTensor
-from loader_label_9_order_oversample import TeethDataset, split_data   # 수정
-from loader_label_9_order_oversample import transforms     # 수정
-from model import ResNet50 
-from model_densenet import DenseNet121
+from torchvision.transforms import Compose, Resize, ToTensor, Normalize, ColorJitter, RandomHorizontalFlip, RandomRotation
+from loader_label_5_order import TeethDataset, split_data   # 수정
+from loader_label_5_order import transforms     # 수정
+from LBA.disease_detection_MultiLabelCL.model_resnet50 import ResNet50 
+from LBA.disease_detection_MultiLabelCL.model_densenet121 import DenseNet121
 from torchmetrics.classification import MultilabelConfusionMatrix
 # from utils import EarlyStopping  
 from torch.utils.data import random_split
@@ -25,10 +25,12 @@ transform = transforms.Compose([
 ])
 
 
-parent_dir = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/cropped_images'
-categories = ['cropped_K00_images', 'cropped_K01_images', 'cropped_K02_images', 'cropped_K03_images', 'cropped_K04_images', 
-                    'cropped_K05_images', 'cropped_K07_images', 'cropped_K08_images', 'cropped_K09_images'] # 9개의 카테고리
+parent_dir = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/cropped_images/margin90'
+# categories = ['cropped_K00_images', 'cropped_K01_images', 'cropped_K02_images', 'cropped_K03_images', 'cropped_K04_images', 
+#                     'cropped_K05_images', 'cropped_K07_images', 'cropped_K08_images', 'cropped_K09_images'] # 9개의 카테고리
 
+categories = ['cropped_K01_images', 'cropped_K02_images', 
+                    'cropped_K05_images', 'cropped_K08_images', 'cropped_K09_images'] # 5개의 카테고리
 split_ratios = {'train': 0.7, 'val': 0.15, 'test': 0.15}
 
 train_files, train_labels, val_files, val_labels, test_files, test_labels = split_data(parent_dir, categories, split_ratios)
@@ -41,13 +43,13 @@ train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
-model = ResNet50().to(device)
-# model = DenseNet121().to(device)
+# model = ResNet50().to(device)
+model = DenseNet121().to(device)
 
 criterion = nn.BCEWithLogitsLoss()
 # criterion = AsymmetricLossOptimized()
-optimizer = Adam(model.parameters(), lr=0.0001)
-confmat = MultilabelConfusionMatrix(num_labels=9) # 수정 필요
+optimizer = Adam(model.parameters(), lr=0.00001)
+confmat = MultilabelConfusionMatrix(num_labels=5) # 수정 필요
 
 def evaluate_model(model, dataloader, criterion, device, confmat=None):
     model.eval()
@@ -81,7 +83,7 @@ def print_confusion_matrix(confmat):
     print(cm)
     confmat.reset() 
 
-model_save_directory = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/disease_detection_MultiLabelCL/saved_resnet50_oversample_0331'
+model_save_directory = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/disease_detection_MultiLabelCL/saved_densenet121_margin90_5class_0402'
 if not os.path.exists(model_save_directory):
     os.makedirs(model_save_directory)
 
@@ -112,7 +114,7 @@ for epoch in range(30):
 
     val_loss, val_acc = evaluate_model(model, val_loader, criterion, device, confmat)
 
-    val_confmat = MultilabelConfusionMatrix(num_labels=9)
+    val_confmat = MultilabelConfusionMatrix(num_labels=5) #수정
     val_loss, val_acc = evaluate_model(model, val_loader, criterion, device, val_confmat)
     print("Validation Confusion Matrix:")
     print_confusion_matrix(val_confmat)
@@ -138,7 +140,7 @@ final_model_path = os.path.join(model_save_directory, 'final_model.pth')
 torch.save(model.state_dict(), final_model_path)
 print(f"Model saved to {final_model_path}")
 
-test_confmat = MultilabelConfusionMatrix(num_labels=9)
+test_confmat = MultilabelConfusionMatrix(num_labels=5) # 수정
 test_loss, test_acc = evaluate_model(model, test_loader, criterion, device, test_confmat)
 print("Test Confusion Matrix:")
 print_confusion_matrix(test_confmat)
