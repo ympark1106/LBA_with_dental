@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose, Resize, ToTensor, Normalize, ColorJitter, RandomHorizontalFlip, RandomRotation
-from loader_label_5_order import TeethDataset, split_data   # 수정
+from loader.loader_label_5_order import TeethDataset, split_data   # 수정
 from loader_label_5_order import transforms     # 수정
 from LBA.disease_detection_MultiLabelCL.model_resnet50 import ResNet50 
 from LBA.disease_detection_MultiLabelCL.model_densenet121 import DenseNet121
