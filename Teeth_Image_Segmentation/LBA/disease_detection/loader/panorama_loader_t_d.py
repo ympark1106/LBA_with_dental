@@ -48,7 +48,8 @@ class CocoDataset(data.Dataset):
         self.clsid2cate = {v:k for k,v, in self.cate2clsid.items()}
         
 
-        self.img_indices = list(self.coco.imgs.keys())#[205:]
+        self.img_indices = list(self.coco.imgs.keys())[205:] #205번 전까지는 라벨링 이상함
+        # print(self.img_indices)
         # 4418 images
   
   

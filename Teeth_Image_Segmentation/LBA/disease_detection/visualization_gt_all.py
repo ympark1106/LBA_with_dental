@@ -7,12 +7,12 @@ import argparse
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-from loader import panorama_coco
+# from torchvision.ops.boxes import masks_to_boxes
+
+# from loader.panorama_coco import CocoDataset
 from loader import panorama_loader_t_d
-
 from torchvision.utils import _log_api_usage_once
 
-from torchvision.utils import _log_api_usage_once
 def masks_to_boxes(masks: torch.Tensor) -> torch.Tensor:
     """
     Compute the bounding boxes around the provided masks.
@@ -46,6 +46,8 @@ def masks_to_boxes(masks: torch.Tensor) -> torch.Tensor:
 
     return bounding_boxes
 
+
+
 def show_anns(masks, cate, labels):
     ax = plt.gca()
     ax.set_autoscale_on(False)
@@ -76,20 +78,56 @@ def show_anns(masks, cate, labels):
     ax.imshow(img)
 
 
-
 def main(args):
+
     GPU_NUM = args.gpu_num    
     args.device = torch.device(f'cuda:{GPU_NUM}' if torch.cuda.is_available() else 'cpu')
     
     root = "/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/new_panorama_coco_dataset/images"
     json_path = "/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/new_panorama_coco_dataset/annotations/instances.json"
     
+    
     dataset = panorama_loader_t_d.CocoDataset(root=root, json=json_path, train=False)
 
-    save_dir = os.path.join(args.dataset_root, args.save_dir)
+    if args.image_id is not None:
+        labeled_pack = dataset.get_item_by_id(args.image_id)
+        print(f"Image ID: {args.image_id}")
+    else:
+        random_idx = np.random.randint(dataset.__len__())
+        labeled_pack = dataset[random_idx]
+        print(f"Random index: {random_idx}")
+        
+    # print(random_idx)
 
-    for idx in range(len(dataset)):
-        labeled_pack = dataset.__getitem__(idx)
+    with torch.no_grad():
+        image, target, _ = labeled_pack
+        masks = target["masks"]
+        labels = target["labels"]
+        cate = dataset.class_cate
+
+        raw_image = np.array(image)
+        # raw_image = raw_image.transpose((1, 2, 0))
+
+        plt.figure(figsize=(20, 20))
+        plt.imshow(raw_image)
+        show_anns(masks, cate, labels)
+
+        plt.axis('off')
+        plt.savefig("vis_ori1.jpg")
+    
+def main(args):
+    GPU_NUM = args.gpu_num    
+    args.device = torch.device(f'cuda:{GPU_NUM}' if torch.cuda.is_available() else 'cpu')
+    
+    root = "/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/new_panorama_coco_dataset/images"
+    json_path = "/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/new_panorama_coco_dataset/annotations/instances.json"  
+    
+    dataset = panorama_loader_t_d.CocoDataset(root=root, json=json_path, train=False)
+
+  
+    for img_id in dataset.img_indices:  
+
+        labeled_pack = dataset.get_item_by_id(img_id)
 
         with torch.no_grad():
             image, target, _ = labeled_pack
@@ -98,25 +136,34 @@ def main(args):
             cate = dataset.class_cate
 
             raw_image = np.array(image)
-            # raw_image = raw_image.transpose((1, 2, 0))
 
             plt.figure(figsize=(20, 20))
             plt.imshow(raw_image)
             show_anns(masks, cate, labels)
 
             plt.axis('off')
-            save_path = os.path.join(save_dir, f"vis_{idx}.jpg")
-            plt.savefig(save_path)
-            plt.close()
+            plt.title(f"Image ID: {img_id}")  
+            if args.save:
+                save_path = os.path.join(args.save_dir, f"vis_{img_id}.jpg")  
+                plt.savefig(save_path)
+                plt.close()  
+                print(f"Image ID: {img_id} processed and saved to {save_path}")
+            else:
+                plt.close()
 
+
+        
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--gpu-num", type=int, default=0, help="gpu id number")
-    parser.add_argument("--dataset-root", type=str, default="/mnt/d/Datasets", help="dataset root directory")
-    parser.add_argument("--dataset-name", type=str, default="coco", help="dataset name")
-    parser.add_argument("--save-dir", type=str, default="visualizations", help="directory to save visualizations")
     
+    parser.add_argument("--dataset-root", type=str, default="/mnt/d/Datasets", help="dataset name")
+    parser.add_argument("--dataset-name", type=str, default="coco", help="dataset name")
+    parser.add_argument("--image-id", type=int, help="Image ID to visualize")
+    
+    parser.add_argument("--save", action='store_true')
+    parser.add_argument("--save-dir", type=str, default="checkpoints")
+ 
     args = parser.parse_args()
 
     main(args)
-
