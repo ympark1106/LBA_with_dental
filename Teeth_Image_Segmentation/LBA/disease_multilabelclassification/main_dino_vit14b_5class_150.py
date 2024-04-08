@@ -4,14 +4,13 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose, Resize, ToTensor, Normalize, ColorJitter, RandomHorizontalFlip, RandomRotation
-from loader_dino_5class import TeethDataset, split_data   # 수정
-from loader_dino_5class import transforms    # 수정
-from model_dino_vit14b import CustomDINOV2    # 수정
+from loader.loader_dino_5class import TeethDataset, split_data   # 수정
+from loader.loader_dino_5class import transforms    # 수정
+from model.model_dino_vit14b import CustomDINOV2    # 수정
 from torchmetrics.classification import MultilabelConfusionMatrix
 # from utils import EarlyStopping  
 from torch.utils.data import random_split
 # from evaluation import evaluate_model
-
 import matplotlib.pyplot as plt
 from PIL import Image
 
@@ -25,10 +24,10 @@ transform = Compose([
 
 
 parent_dir = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/cropped_images/margin150'
-# categories = ['cropped_K00_images', 'cropped_K01_images', 'cropped_K02_images', 'cropped_K03_images', 'cropped_K04_images', 
-#                     'cropped_K05_images', 'cropped_K07_images', 'cropped_K08_images', 'cropped_K09_images'] # 9개의 카테고리
-categories = ['cropped_K01_images', 'cropped_K02_images', 
-                    'cropped_K05_images', 'cropped_K08_images', 'cropped_K09_images'] # 5개의 카테고리
+categories = ['cropped_K00_images', 'cropped_K01_images', 'cropped_K02_images', 'cropped_K03_images', 'cropped_K04_images', 
+                    'cropped_K05_images', 'cropped_K07_images', 'cropped_K08_images', 'cropped_K09_images'] # 9개의 카테고리
+# categories = ['cropped_K01_images', 'cropped_K02_images', 
+#                     'cropped_K05_images', 'cropped_K08_images', 'cropped_K09_images'] # 5개의 카테고리
 
 split_ratios = {'train': 0.7, 'val': 0.15, 'test': 0.15}
 
@@ -47,7 +46,7 @@ model = CustomDINOV2(num_classes=5).to(device)
 
 criterion = nn.BCEWithLogitsLoss()
 optimizer = Adam(model.parameters(), lr=0.000005)
-confmat = MultilabelConfusionMatrix(num_labels=5) # 수정 필요
+confmat = MultilabelConfusionMatrix(num_labels=9) # 수정 필요
 
 def evaluate_model(model, dataloader, criterion, device, confmat=None):
     model.eval()
@@ -81,7 +80,7 @@ def print_confusion_matrix(confmat):
     print(cm)
     confmat.reset() 
 
-model_save_directory = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/disease_detection_MultiLabelCL/saved_dinovit14b_margin150_5class_0401' # 'saved_dinovit14b
+model_save_directory = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/disease_detection_MultiLabelCL/saved_dinovit14b_margin150_LinearProbing_0408' # 'saved_dinovit14b
 if not os.path.exists(model_save_directory):
     os.makedirs(model_save_directory)
 

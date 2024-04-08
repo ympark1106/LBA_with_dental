@@ -9,11 +9,11 @@ import matplotlib.patches as patches
 
 # from torchvision.ops.boxes import masks_to_boxes
 
-from loader.panorama_coco import CocoDataset
-# from loader.panorama_coco_old import CocoDataset
-
-
+# from loader.panorama_coco import CocoDataset
+from loader import panorama_coco
+from loader import panorama_loader_t_d
 from torchvision.utils import _log_api_usage_once
+
 def masks_to_boxes(masks: torch.Tensor) -> torch.Tensor:
     """
     Compute the bounding boxes around the provided masks.
@@ -46,6 +46,8 @@ def masks_to_boxes(masks: torch.Tensor) -> torch.Tensor:
         bounding_boxes[index, 3] = torch.max(y)
 
     return bounding_boxes
+
+
 
 def show_anns(masks, cate, labels):
     ax = plt.gca()
@@ -82,23 +84,21 @@ def main(args):
     GPU_NUM = args.gpu_num    
     args.device = torch.device(f'cuda:{GPU_NUM}' if torch.cuda.is_available() else 'cpu')
     
-    # root = "/mnt/d/Datasets/panorama_dataset_old/images"
-    # json_path = "/mnt/d/Datasets/panorama_dataset_old/annotations/instances.json"
+    root = "/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/new_panorama_coco_dataset/images"
+    json_path = "/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/new_panorama_coco_dataset/annotations/instances.json"
     
     
-    root = "/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/panorama_dataset/Group1/images"
-    json_path = "/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/panorama_dataset/Group1/annotations/instances.json"
-    
-    
-    dataset = CocoDataset(root=root, json=json_path, train=False)
+    dataset = panorama_loader_t_d.CocoDataset(root=root, json=json_path, train=False)
 
-    #random_idx = np.random.randint(dataset.__len__())
-
-    random_idx = 21
-
-    print(random_idx)
-
-    labeled_pack = dataset.__getitem__(random_idx)
+    if args.image_id is not None:
+        labeled_pack = dataset.get_item_by_id(args.image_id)
+        print(f"Image ID: {args.image_id}")
+    else:
+        random_idx = np.random.randint(dataset.__len__())
+        labeled_pack = dataset[random_idx]
+        print(f"Random index: {random_idx}")
+        
+    # print(random_idx)
 
     with torch.no_grad():
         image, target, _ = labeled_pack
@@ -107,7 +107,7 @@ def main(args):
         cate = dataset.class_cate
 
         raw_image = np.array(image)
-        raw_image = raw_image.transpose((1, 2, 0))
+        # raw_image = raw_image.transpose((1, 2, 0))
 
         plt.figure(figsize=(20, 20))
         plt.imshow(raw_image)
@@ -123,11 +123,11 @@ if __name__ == "__main__":
     
     parser.add_argument("--dataset-root", type=str, default="/mnt/d/Datasets", help="dataset name")
     parser.add_argument("--dataset-name", type=str, default="coco", help="dataset name")
+    parser.add_argument("--image-id", type=int, help="Image ID to visualize")
     
     parser.add_argument("--save", action='store_true')
     parser.add_argument("--save-dir", type=str, default="checkpoints")
  
     args = parser.parse_args()
-
 
     main(args)

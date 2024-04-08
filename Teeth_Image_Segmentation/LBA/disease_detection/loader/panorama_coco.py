@@ -264,8 +264,8 @@ class CocoDataset(data.Dataset):
 
 
 if __name__ == "__main__":
-    s = CocoDataset(root="/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/panorama_dataset/Group1/images", 
-                    json="/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/panorama_dataset/Group1/annotations/instances.json")
+    s = CocoDataset(root="/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/new_panorama_coco_dataset/images", 
+                    json="/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/new_panorama_coco_dataset/annotations/instances.json")
 
     i = 0
     print(s.__getitem__(i)[1])

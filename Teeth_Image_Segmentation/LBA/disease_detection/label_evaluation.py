@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import DataLoader
-from loader import TeethDataset  
+from Teeth_Image_Segmentation.LBA.disease_detection.loader1 import TeethDataset  
 from model import ResNet50  
 from torchvision import transforms
 from sklearn.metrics import classification_report

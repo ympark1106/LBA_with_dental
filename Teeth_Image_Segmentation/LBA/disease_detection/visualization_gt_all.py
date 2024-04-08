@@ -7,7 +7,8 @@ import argparse
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-from loader.panorama_coco import CocoDataset
+from loader import panorama_coco
+from loader import panorama_loader_t_d
 
 from torchvision.utils import _log_api_usage_once
 
@@ -80,10 +81,10 @@ def main(args):
     GPU_NUM = args.gpu_num    
     args.device = torch.device(f'cuda:{GPU_NUM}' if torch.cuda.is_available() else 'cpu')
     
-    root = "/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/panorama_dataset/Group1/images"
-    json_path = "/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/panorama_dataset/Group1/annotations/instances.json"
+    root = "/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/new_panorama_coco_dataset/images"
+    json_path = "/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/new_panorama_coco_dataset/annotations/instances.json"
     
-    dataset = CocoDataset(root=root, json=json_path, train=False)
+    dataset = panorama_loader_t_d.CocoDataset(root=root, json=json_path, train=False)
 
     save_dir = os.path.join(args.dataset_root, args.save_dir)
 
@@ -97,7 +98,7 @@ def main(args):
             cate = dataset.class_cate
 
             raw_image = np.array(image)
-            raw_image = raw_image.transpose((1, 2, 0))
+            # raw_image = raw_image.transpose((1, 2, 0))
 
             plt.figure(figsize=(20, 20))
             plt.imshow(raw_image)

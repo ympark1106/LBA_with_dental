@@ -63,7 +63,12 @@ class CocoDataset(data.Dataset):
                         data_augmentation="val", backend="pil", use_v2=False)
             
 
-   
+    def get_item_by_id(self, img_id):
+        if img_id in self.img_indices:
+            index = self.img_indices.index(img_id)
+            return self.__getitem__(index)
+        else:
+            raise ValueError(f"Image ID {img_id} not found in dataset.")
     
     def convert_coco_poly_to_mask(self, segmentations, height, width):
         masks = []
@@ -93,9 +98,10 @@ class CocoDataset(data.Dataset):
         image_id = self.img_indices[index]
         # image_id = 299875487
         img_meta = self.coco.imgs[image_id]
-        # print(image_id)
+        print(image_id)
         path = img_meta['file_name']
-        image = Image.open(os.path.join(self.root, 'images', path)).convert('RGB')
+        image = Image.open(os.path.join(self.root, path)).convert('RGB')
+        # print("Image shape:", image.size)
         w, h = image.size
 
 
@@ -163,7 +169,7 @@ class CocoDataset(data.Dataset):
             return image, target
 
         else:
-            raw_image = Image.open(os.path.join(self.root, 'images', path)).convert('RGB')
+            raw_image = Image.open(os.path.join(self.root, path)).convert('RGB')
         
             
             return image, target, raw_image 
@@ -176,8 +182,8 @@ class CocoDataset(data.Dataset):
 
 
 if __name__ == "__main__":
-    s = CocoDataset(root="./panorama_dataset/images", 
-                    json="./panorama_dataset/annotations/panorama_coco.json")
+    s = CocoDataset(root="/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/new_panorama_coco_dataset/images", 
+                    json="/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/new_panorama_coco_dataset/annotations/instances.json")
 
     i = 0
     print(s.__getitem__(i)[1])

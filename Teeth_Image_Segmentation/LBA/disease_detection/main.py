@@ -4,8 +4,8 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torchvision.transforms import ToTensor
-from loader import TeethDataset
-from loader import transforms 
+from Teeth_Image_Segmentation.LBA.disease_detection.loader1 import TeethDataset
+from Teeth_Image_Segmentation.LBA.disease_detection.loader1 import transforms 
 from model import ResNet50 
 # from utils import EarlyStopping  
 from torch.utils.data import random_split
