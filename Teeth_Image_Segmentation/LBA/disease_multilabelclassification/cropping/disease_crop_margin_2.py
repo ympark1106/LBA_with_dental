@@ -79,13 +79,13 @@ def crop_and_save(image_path, output_path, bbox):
 if __name__ == "__main__":
     root = "/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/new_panorama_coco_dataset/images"
     json_path = "/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/new_panorama_coco_dataset/annotations/instances.json"
-    output_folder = "/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/cropped_images/cropped_K02_images_margin90"
+    output_folder = "/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/cropped_images/cropped_K02_images_margin150"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
-    teeth_category_symbols = ['#', '@', 'teeth3']  
+    teeth_category_symbols = ['#', 'teeth3']  
     margin = 150
 
     find_decay_teeth(json_path, root, output_folder, teeth_category_symbols, margin)
 
-cropped_image_path = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/cropped_images/cropped_K02_images_margin90'
+cropped_image_path = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/cropped_images/cropped_K02_images_margin150'
 print("Number of cropped images:", len(os.listdir(cropped_image_path)))

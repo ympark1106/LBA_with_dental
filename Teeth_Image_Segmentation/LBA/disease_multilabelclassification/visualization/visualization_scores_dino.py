@@ -3,17 +3,17 @@ import numpy as np
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 import matplotlib.pyplot as plt
 # from model_dino_vit14b import CustomDINOV2
-from LBA.disease_detection_MultiLabelCL.model_dino_vit4s import CustomDINOV2
+from model import model_dino_vit14b
 import pandas as pd
 from sklearn.metrics import hamming_loss
-from loader_dino_9 import test_loader # 수정
+from loader import loader_dino_5class # 수정
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model = CustomDINOV2(num_classes=9).to(device)
+model = model_dino_vit14b.CustomDINOV2(num_classes=5).to(device) #수정
 
 # 수정
-model_save_path = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/disease_detection_MultiLabelCL/saved_dinov2_margin150/model_epoch_30.pth'
+model_save_path = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/disease_multilabelclassification/checkpoints/saved_dinovit14b_5class_0408/model_epoch_17_valloss_0.9069258310176708_valacc_0.40370370370370373.pth'
 checkpoint = torch.load(model_save_path)
 model.load_state_dict(checkpoint['model_state_dict'])
 
@@ -22,7 +22,7 @@ all_preds = []
 all_labels = []
 
 with torch.no_grad():
-    for images, labels in test_loader:  
+    for images, labels in loader_dino_5class.test_loader:  
         images = images.to(device)
         labels = labels.to(device)
         outputs = model(images)
@@ -45,7 +45,7 @@ print(f"Exact Match Ratio: {exact_match_ratio:.4f}")
 metrics_df = pd.DataFrame({'Precision': precisions, 'Recall': recalls, 'F1-Score': f1_scores}, index=labels)
 metrics_df['Accuracy'] = accuracies
 # metrics_df['multi-label Accuracy'] = [exact_match_ratio] * len(metrics_df)  
-print(metrics_df)
+# print(metrics_df)
 x = np.arange(len(labels))
 
 plt.figure(figsize=(18, 6))
@@ -65,8 +65,8 @@ plt.close()
 
 hamming_loss_value = hamming_loss(all_labels, all_preds)
 
-print("Hamming Loss:")
-print(f"Hamming Loss: {hamming_loss_value:.4f}")
+# print("Hamming Loss:")
+# print(f"Hamming Loss: {hamming_loss_value:.4f}")
 
 precision_micro = precision_score(all_labels, all_preds, average='micro')
 recall_micro = recall_score(all_labels, all_preds, average='micro')
@@ -91,4 +91,3 @@ metrics_df.loc['Macro Average'] = [precision_macro, recall_macro, f1_macro, np.n
 metrics_df.loc['Hamming Loss'] = [np.nan, np.nan, np.nan, hamming_loss_value]
 
 print(metrics_df)
-
