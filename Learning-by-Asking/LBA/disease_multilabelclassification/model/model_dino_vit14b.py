@@ -22,4 +22,4 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.000005)
 #     if "transformer" in name:
 #         param.requires_grad = False
 #     # print(name, param.requires_grad)
-
+print(model)
