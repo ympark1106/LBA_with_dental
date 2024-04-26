@@ -18,7 +18,7 @@ class TeethDataset(Dataset):
             transforms.RandomHorizontalFlip(),
             # transforms.RandomRotation(20),
         ])
- 
+    
 
     def __len__(self):
         return len(self.file_paths)
@@ -104,8 +104,9 @@ def split_data(parent_dir, categories, split_ratios):
 
 
 parent_dir = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/cropped_images/margin150'
-categories = ['cropped_K00_images', 'cropped_K01_images', 'cropped_K02_images', 'cropped_K03_images', 'cropped_K04_images', 
-              'cropped_K05_images', 'cropped_K07_images', 'cropped_K08_images', 'cropped_K09_images']
+# categories = ['cropped_K00_images', 'cropped_K01_images', 'cropped_K02_images', 'cropped_K03_images', 'cropped_K04_images', 
+#               'cropped_K05_images', 'cropped_K07_images', 'cropped_K08_images', 'cropped_K09_images']
+categories = ['cropped_K01_images', 'cropped_K02_images', 'cropped_K05_images', 'cropped_K09_images']
               
 split_ratios = {'train': 0.7, 'val': 0.15, 'test': 0.15}
 

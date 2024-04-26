@@ -1,118 +1,126 @@
 import os
+import time
+import argparse
+import warnings
+
+warnings.filterwarnings(action='ignore')
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
+
 import torch
-import torch.nn as nn
-from torch.optim import Adam
-from torch.utils.data import DataLoader
-from torchvision.transforms import ToTensor
-from Teeth_Image_Segmentation.LBA.disease_detection.loader1 import TeethDataset
-from Teeth_Image_Segmentation.LBA.disease_detection.loader1 import transforms 
-from model import ResNet50 
-# from utils import EarlyStopping  
-from torch.utils.data import random_split
-# from evaluation import evaluate_model
 
-from grad_cam import GradCAM
-import matplotlib.pyplot as plt
-from PIL import Image
+from loader.panorama_coco import CocoDataset, collate_fn
+from models.maskrcnn import dental
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def main(exp_name, args):
+    is_save = args.save
+    if is_save:
+        save_path = os.path.join(args.save_dir, '{}'.format(exp_name)).replace(" ", "_")
+        save_path = save_path.replace(":", "-")
+        
+        if not os.path.exists(save_path):
+            os.mkdir(save_path)
+        
+        f = open(os.path.join(save_path, "info.txt"), 'w')
+        f.write(str(args))
 
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-])
-
-disease_images_dir = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/cropped_K01_images'
-normal_images_dir = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/not_K01_images'
-
-dataset = TeethDataset(disease_images_dir, normal_images_dir, transform=transform)
-
-train_size = int(0.7 * len(dataset))
-val_size = int(0.15 * len(dataset))
-test_size = len(dataset) - train_size - val_size
-train_dataset, val_dataset, test_dataset = random_split(dataset, [train_size, val_size, test_size])
-
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
-test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
-
-model = ResNet50().to(device)
-criterion = nn.CrossEntropyLoss()
-optimizer = Adam(model.parameters(), lr=0.001)
-
-def evaluate_model(model, dataloader, criterion, device):
-    model.eval()
-    running_loss = 0.0
-    corrects = 0
-    total = 0
-
-    with torch.no_grad():
-        for images, labels in dataloader:
-            images, labels = images.to(device), labels.to(device)
-            outputs = model(images)
-            loss = criterion(outputs, labels)
-            _, preds = torch.max(outputs, 1)
-
-            running_loss += loss.item() * images.size(0)
-            corrects += torch.sum(preds == labels.data)
-            total += labels.size(0)
-
-    final_loss = running_loss / total
-    final_acc = corrects.double() / total
-    return final_loss, final_acc
-
-model_save_directory = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/disease_detection/K01_saved_models'
-if not os.path.exists(model_save_directory):
-    os.makedirs(model_save_directory)
-
-for epoch in range(30):
-    model.train()
-    running_loss = 0.0
-    corrects = 0
-    total = 0
-
-    for images, labels in train_loader:
-        images, labels = images.to(device), labels.to(device)
-
-        optimizer.zero_grad()
-
-        outputs = model(images)
-        _, preds = torch.max(outputs, 1)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-
-        running_loss += loss.item() * images.size(0)
-        corrects += torch.sum(preds == labels.data)
-        total += labels.size(0)
-
-    epoch_loss = running_loss / total
-    epoch_acc = corrects.double() / total
-
-    val_loss, val_acc = evaluate_model(model, val_loader, criterion, device)
-
-    model_save_name = f'model_epoch_{epoch+1}.pth'
-    model_save_path = os.path.join(model_save_directory, model_save_name)
-    torch.save({
-        'model_state_dict': model.state_dict(),
-        'epoch_loss': epoch_loss,
-        'epoch_acc': epoch_acc,
-        'val_loss': val_loss,
-        'val_acc': val_acc
-    }, model_save_path)
-
-    print(f"Epoch {epoch+1}, Loss: {epoch_loss:.4f}, Accuracy: {epoch_acc:.4f}, Val Loss: {val_loss:.4f}, Val Accuracy: {val_acc:.4f}")
-
-final_model_path = os.path.join(model_save_directory, 'final_model.pth')
-torch.save(model.state_dict(), final_model_path)
-print(f"Model saved to {final_model_path}")
-
-test_loss, test_acc = evaluate_model(model, test_loader, criterion, device)
-print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.4f}")
+        f.close()
+        
+    GPU_NUM = args.gpu_num    
+    args.device = torch.device(f'cuda:{GPU_NUM}' if torch.cuda.is_available() else 'cpu')
+    # args.device = torch.device("cpu")
+    
+    root = "/mnt/d/Datasets/panorama_dataset/Group1/images"
+    json_path = "/mnt/d/Datasets/panorama_dataset/Group1/annotations/instances.json"
+    
+    # root = "/mnt/d/Datasets/ToothInstanceSegmentation/imgs/v1/"
+    # json_path = "/mnt/d/Datasets/ToothInstanceSegmentation/annotations/v1/train_coco_inst_teeth.json"
+    
+    train_dataset = CocoDataset(root=root, json=json_path, train=True)
+    print("train_dataset size : {}".format(train_dataset.__len__()))
+    # exit()
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, pin_memory=False,num_workers=4, shuffle=True, collate_fn=collate_fn)
+    
+    num_classes = len(train_dataset.class_cate)
+    # num_classes = 7
+    model = dental(num_classes=num_classes).to(args.device)
+    parameters = [p for p in model.parameters() if p.requires_grad]
 
 
+    optimizer = torch.optim.SGD(parameters, lr=args.lr, momentum=0.9, weight_decay=args.weight_decay)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.lr_steps, gamma=0.1)
+    
+    print_freq = 5
+    for epoch in range(args.epochs):
+        
+        loss_sum = 0
+ 
+        
+        model.train()
+        for i, data in enumerate(train_loader):
+            
+            
+            lr_scheduler = None
+  
+            labeled_image, labeled_target = data
+            
+    
+            labeled_image = list(image.to(args.device) for image in labeled_image)
+            labeled_target = [{k: v.to(args.device) for k, v in t.items()} for t in labeled_target]
 
 
+            optimizer.zero_grad()
+            
+            losses = model(labeled_image, labeled_target)
+            # print(losses)
+            loss = sum(loss for loss in losses.values())
+            
+            loss.backward()
+            optimizer.step()
+            
+  
+            loss_sum += loss.item()
+            loss_avg = loss_sum / (i+1)
+            
+            if i % print_freq == 0:
+                print(loss_avg)
+            
+            
+            if lr_scheduler is not None:
+                lr_scheduler.step()
+                
+        scheduler.step()
+        print("-"*80)
+        
+        if args.save:
+            torch.save(model.state_dict(), os.path.join(save_path, "epoch{}.pth".format(str(epoch))))    
+    
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--momentum', default=0.9, type=float, metavar='M', help='momentum')
+    parser.add_argument('--weight-decay', default=1e-4, type=float, metavar='W', help='weight decay')
+    parser.add_argument("--scheduler", type=str, default="StepLR", help="learning rate scheduler")
+    parser.add_argument("--gpu-num", type=int, default=0, help="gpu id number")
+    parser.add_argument("--pretrained", type=bool, default=True, help="small model pretrained by imagenet")
+    
+    parser.add_argument("--dataset-root", type=str, default="/mnt/d/Datasets", help="dataset name")
+    parser.add_argument("--dataset-name", type=str, default="coco", help="dataset name")
+    
+    parser.add_argument("--epochs", type=int, default=50)
+    parser.add_argument("--batch-size", type=int, default=4)
+    parser.add_argument("--lr", type=float, default=2e-2)
+    parser.add_argument(
+        "--lr-steps",
+        default=[20, 30],
+        nargs="+",
+        type=int,
+        help="decrease lr every step-size epochs (multisteplr scheduler only)",
+    )
+    
+    parser.add_argument("--save", action='store_true')
+    parser.add_argument("--save-dir", type=str, default="checkpoints")
+ 
+    args = parser.parse_args()
+    exp_name = time.strftime('%c', time.localtime(time.time()))
 
-
+    main(exp_name, args)

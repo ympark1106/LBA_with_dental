@@ -1,1 +1,0 @@
-Namespace(momentum=0.9, weight_decay=0.0001, scheduler='StepLR', gpu_num=0, pretrained=True, dataset_root='/mnt/d/Datasets', dataset_name='coco', epochs=50, batch_size=2, lr=0.02, lr_steps=[20, 30], save=True, save_dir='checkpoints')
