@@ -13,7 +13,7 @@ from torch.utils.data import random_split
 import matplotlib.pyplot as plt
 from PIL import Image
 
-device = torch.device("cuda:4" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 transform = Compose([
     Resize((224, 224)),  
@@ -38,7 +38,10 @@ train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
-model = model_dino_vit14b_rein.CustomDINOV2(num_classes=9, depth=12, embed_dim=384, patch_size=16).to(device)  
+model = model_dino_vit14b_rein.CustomDINOV2(num_classes=9, depth=12, embed_dim=768, patch_size=16).to(device)
+print(model)
+
+max_epoch = 200
 
 class_counts = torch.zeros(len(categories), dtype=torch.int64)
 for _, labels in train_loader:
@@ -49,13 +52,17 @@ for _, labels in train_loader:
 max_count = float(class_counts.max())
 weights = max_count / class_counts
 weights_tensor = weights.float().to(device)
-print(weights_tensor)
+# print(weights_tensor)
 criterion = nn.CrossEntropyLoss(weight=weights_tensor) 
-
 # criterion = nn.CrossEntropyLoss() 
-optimizer = Adam(model.parameters(), lr=0.00001)
+lr_decay = [int(0.5*max_epoch), int(0.75*max_epoch), int(0.9*max_epoch)]
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay = 1e-5)
+scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, lr_decay)
 # optimizer = Adam(model.parameters(), lr=0.000005)
 confmat = MulticlassConfusionMatrix(num_classes=9) # 수정 필요
+
+
+
 
 def evaluate_model(model, dataloader, criterion, device, confmat=None):
     model.eval()
@@ -69,7 +76,11 @@ def evaluate_model(model, dataloader, criterion, device, confmat=None):
     with torch.no_grad():
         for images, labels in dataloader:
             images, labels = images.to(device), labels.to(device)
-            outputs = model(images)
+
+            features = model.forward_features(images)
+            features = features[:, 0, :]
+
+            outputs = model.linear(features)
             loss = criterion(outputs, labels)
             preds = outputs.argmax(dim=1)
 
@@ -89,11 +100,14 @@ def print_confusion_matrix(confmat):
     print(cm)
     confmat.reset() 
 
-model_save_directory = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/disease_multiclassclassification/checkpoints/9_saved_dinovit14b_rein_0.00001_weight_0425' # 'saved_dinovit14b
+
+
+
+model_save_directory = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/disease_multiclassclassification/checkpoints/9_saved_dinovit14b_rein_weight_0425' # 'saved_dinovit14b
 if not os.path.exists(model_save_directory):
     os.makedirs(model_save_directory)
 
-for epoch in range(500):
+for epoch in range(max_epoch):
     model.train()
     running_loss = 0.0
     corrects = 0
@@ -104,7 +118,10 @@ for epoch in range(500):
 
         optimizer.zero_grad()
 
-        outputs = model(images)
+        features = model.forward_features(images)
+        features = features[:, 0, :]
+
+        outputs = model.linear(features)
         preds = outputs.argmax(dim=1)
         loss = criterion(outputs, labels)
         loss.backward()
@@ -119,7 +136,6 @@ for epoch in range(500):
     epoch_acc = float(corrects) / total
 
     val_loss, val_acc = evaluate_model(model, val_loader, criterion, device, confmat)
-
   
     val_confmat = MulticlassConfusionMatrix(num_classes=9)
     val_loss, val_acc = evaluate_model(model, val_loader, criterion, device, val_confmat)
@@ -135,6 +151,8 @@ for epoch in range(500):
         'val_loss': val_loss,
         'val_acc': val_acc
     }, model_save_path)
+
+    scheduler.step()
 
     # confmat.update(preds.int().clone().detach().cpu(), labels.int().to(device='cpu'))
     print(f"Epoch {epoch+1}, Loss: {epoch_loss:.4f}, Accuracy: {epoch_acc:.4f}, Val Loss: {val_loss:.4f}, Val Accuracy: {val_acc:.4f}")
