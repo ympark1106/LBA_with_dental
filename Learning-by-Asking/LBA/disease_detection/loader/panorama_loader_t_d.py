@@ -45,7 +45,9 @@ class CocoDataset(data.Dataset):
         
 
         self.cate2clsid = {cls_id:idx for idx, cls_id in enumerate(self.class_id)}
+        print(self.cate2clsid)
         self.clsid2cate = {v:k for k,v, in self.cate2clsid.items()}
+        print(self.clsid2cate)
         
 
         self.img_indices = list(self.coco.imgs.keys())[205:] #205번 전까지는 라벨링 이상함
@@ -112,15 +114,16 @@ class CocoDataset(data.Dataset):
         boxes = [obj["bbox"] for obj in anno]
         
         boxes = torch.as_tensor(boxes, dtype=torch.float32).reshape(-1, 4)
+        # print(boxes)
 
         boxes[:, 2:] += boxes[:, :2]
         boxes[:, 0::2].clamp_(min=0, max=w)
         boxes[:, 1::2].clamp_(min=0, max=h)
         
         classes = [obj["category_id"]+1 for obj in anno]
+        print(classes)
 
         classes = torch.tensor(classes, dtype=torch.int64)
-        
         
         segmentations = [obj["segmentation"] for obj in anno]
         
@@ -183,8 +186,8 @@ class CocoDataset(data.Dataset):
 
 
 if __name__ == "__main__":
-    s = CocoDataset(root="/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/new_panorama_coco_dataset/images", 
-                    json="/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/new_panorama_coco_dataset/annotations/instances.json")
+    s = CocoDataset(root="/home/gpu/Workspace/youmin/Learning-by-Asking/new_panorama_coco_dataset/images", 
+                    json="/home/gpu/Workspace/youmin/Learning-by-Asking/new_panorama_coco_dataset/annotations/instances.json")
 
     i = 0
     print(s.__getitem__(i)[1])

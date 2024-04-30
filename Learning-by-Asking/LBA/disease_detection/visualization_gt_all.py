@@ -112,8 +112,6 @@ def main(args):
         plt.imshow(raw_image)
         show_anns(masks, cate, labels)
 
-        plt.axis('off')
-        plt.savefig("vis_ori1.jpg")
     
 def main(args):
     GPU_NUM = args.gpu_num    
