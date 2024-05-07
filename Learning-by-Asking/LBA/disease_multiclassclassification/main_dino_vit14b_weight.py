@@ -13,7 +13,7 @@ from torch.utils.data import random_split
 import matplotlib.pyplot as plt
 from PIL import Image
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 transform = Compose([
     Resize((224, 224)),  
@@ -21,8 +21,9 @@ transform = Compose([
     Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
+max_epoch = 200
 
-parent_dir = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/cropped_images/margin150'
+parent_dir = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/cropped_images/margin150_unique'
 categories = ['cropped_K00_images', 'cropped_K01_images', 'cropped_K02_images', 'cropped_K03_images', 'cropped_K04_images', 'cropped_K05_images', 
 'cropped_K07_images', 'cropped_K08_images', 
                     'cropped_K09_images'] # 9개의 카테고리
@@ -51,6 +52,7 @@ weights = max_count / class_counts
 weights_tensor = weights.float().to(device)
 
 criterion = nn.CrossEntropyLoss(weight=weights_tensor)
+
 
 # criterion = nn.CrossEntropyLoss()
 optimizer = Adam(model.parameters(), lr=0.00001)
@@ -89,11 +91,11 @@ def print_confusion_matrix(confmat):
     print(cm)
     confmat.reset() 
 
-model_save_directory = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/disease_multiclassclassification/checkpoints/9_saved_dinovit14b_finetune_weight_0424' # 'saved_dinovit14b
+model_save_directory = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/disease_multiclassclassification/checkpoints/9_saved_dinovit14b_finetune_weight_1e-5_0501' # 'saved_dinovit14b
 if not os.path.exists(model_save_directory):
     os.makedirs(model_save_directory)
 
-for epoch in range(200):
+for epoch in range(max_epoch):
     model.train()
     running_loss = 0.0
     corrects = 0
@@ -120,7 +122,7 @@ for epoch in range(200):
     val_loss, val_acc = evaluate_model(model, val_loader, criterion, device, confmat)
 
   
-    val_confmat = MulticlassConfusionMatrix(num_classes=9)
+    val_confmat = MulticlassConfusionMatrix(num_classes=9) # 수정
     val_loss, val_acc = evaluate_model(model, val_loader, criterion, device, val_confmat)
     print("Validation Confusion Matrix:")
     print_confusion_matrix(val_confmat)
@@ -134,6 +136,8 @@ for epoch in range(200):
         'val_loss': val_loss,
         'val_acc': val_acc
     }, model_save_path)
+
+    # scheduler.step()
 
     # confmat.update(preds.int().clone().detach().cpu(), labels.int().to(device='cpu'))
     print(f"Epoch {epoch+1}, Loss: {epoch_loss:.4f}, Accuracy: {epoch_acc:.4f}, Val Loss: {val_loss:.4f}, Val Accuracy: {val_acc:.4f}")

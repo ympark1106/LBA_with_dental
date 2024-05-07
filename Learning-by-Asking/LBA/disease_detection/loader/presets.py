@@ -81,7 +81,7 @@ class DetectionPresetTrain:
                 T.RandomHorizontalFlip(p=hflip_prob),
             ]
         else:
-            raise ValueError(f'Unknown data augmentation policy "{data_augmentation}"')
+            raise ValueError(f'Unknown data augmentation policy"{data_augmentation}"')
 
         if backend == "pil":
             # Note: we could just convert to pure tensors even in v2.

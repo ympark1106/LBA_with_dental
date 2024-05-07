@@ -13,10 +13,10 @@ class CustomDINOV2(nn.Module):
         x = self.classifier(x)
         return x
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-model = CustomDINOV2(num_classes=9).to(device)
-criterion = nn.CrossEntropyLoss() 
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+# device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+# model = CustomDINOV2(num_classes=9).to(device)
+# criterion = nn.CrossEntropyLoss() 
+# optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 # for name, param in model.named_parameters():
 #     if "transformer" in name:

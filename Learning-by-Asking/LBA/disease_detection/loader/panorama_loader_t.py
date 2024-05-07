@@ -27,9 +27,8 @@ def collate_fn(samples):
     return images, targets
 
 class CocoDataset(Dataset):
-    def __init__(self, json, root, transform=None):
+    def __init__(self, json, root, train=False):
         self.root= root_path
-        self.transform = transform
         self.coco = COCO(json_path)
         self.image_ids = list(self.coco.imgs.keys())[204:]
         # print(self.image_ids)
@@ -40,9 +39,16 @@ class CocoDataset(Dataset):
         # print(self.class_id)
         self.cate2clsid = {cls_id:idx for idx, cls_id in enumerate(self.class_id)}
         self.clsid2cate = {v:k for k,v, in self.cate2clsid.items()}
+
+        if train:
+            self.transform = presets.DetectionPresetTrain(
+                        data_augmentation="fixedscale", backend="pil", use_v2=False)
+            
+        else:
+            self.transform = presets.DetectionPresetTrain(
+                        data_augmentation="val", backend="pil", use_v2=False)
         
     
-
 
     def __len__(self):
         return len(self.image_ids)
@@ -75,7 +81,7 @@ class CocoDataset(Dataset):
         bboxes[:, 2:] += bboxes[:, :2]
 
         classes = [obj['category_id']+1 for obj in ann]
-        print(classes)
+        # print(classes)
         classes = torch.tensor(classes, dtype=torch.int64)
 
         target = {}
@@ -93,8 +99,8 @@ if __name__ == "__main__":
     s = CocoDataset(root = "/home/gpu/Workspace/youmin/Learning-by-Asking/new_panorama_coco_dataset/images", json = "/home/gpu/Workspace/youmin/Learning-by-Asking/new_panorama_coco_dataset/annotations/instances.json")
 
     i = 0
-    print(s.__getitem__(i)[1])
-    print()
+    # print(s.__getitem__(i)[1])
+    # print()
 
 
 

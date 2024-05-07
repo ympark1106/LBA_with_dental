@@ -2,12 +2,13 @@ import torch
 import torch.nn as nn
 from reins import Reins
 from utils_rein import set_requires_grad, set_train
+# from dinov2.models.vision_transformer import vit_base
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:4" if torch.cuda.is_available() else "cpu")
 dinov2_vitb14 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14').to(device)
 
 class CustomDINOV2(nn.Module):
-    def __init__(self, num_classes=9, depth=12, embed_dim=768, patch_size=16):
+    def __init__(self, num_classes=7, depth=12, embed_dim=768, patch_size=16):
         super(CustomDINOV2, self).__init__()
         # self.transformer = dinov2_vitb14
         self.reins = Reins(

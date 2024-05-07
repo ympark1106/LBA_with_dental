@@ -3,16 +3,17 @@ import numpy as np
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 import matplotlib.pyplot as plt
 import pandas as pd
-import loader_dino_9
-import model_dino_vit14b, model_resnet50, model_dino_vit14b_rein, model_dino_vit14b_linearprobe
+import loader_dino
+import model_dino_vit14b_rein
+import model_dino_vit14b_rein_1
 from torchmetrics.classification import MulticlassConfusionMatrix
 
-device = torch.device("cuda:5" if torch.cuda.is_available() else "cpu")
-model = model_dino_vit14b.CustomDINOV2(num_classes=9).to(device)
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+model = model_dino_vit14b_rein_1.CustomDINOV2(num_classes=7).to(device)
 # model = model_resnet50_9.ResNet50(num_classes=9).to(device)
-test_loader = loader_dino_9.test_loader
+test_loader = loader_dino.test_loader
 
-model_save_path = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/disease_multiclassclassification/checkpoints/9_saved_dinovit14b_finetune_weight_0424/model_epoch_102_valloss_3.200774655370655_valacc_0.4161676646706587.pth'
+model_save_path = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/disease_multiclassclassification/checkpoints/7_saved_dinovit14b_rein_weight_0501/model_epoch_132_valloss_4.977275657653808_valacc_0.47719298245614034.pth'
 checkpoint = torch.load(model_save_path)
 model.load_state_dict(checkpoint['model_state_dict'])
 
@@ -24,14 +25,16 @@ model.eval()
 all_preds = []
 all_labels = []
 
-confmat = MulticlassConfusionMatrix(num_classes=9).to(device)
+confmat = MulticlassConfusionMatrix(num_classes=7).to(device)
 confmat.reset()
 
 with torch.no_grad():
     for images, labels in test_loader:
         images = images.to(device)
         labels = labels.to(device)
-        outputs = model(images)
+        features = model.forward_features(images)
+        features = features[:, 0, :]
+        outputs = model.linear(features)
         preds = outputs.argmax(dim=1) 
         all_preds.append(preds.cpu().numpy())
         all_labels.append(labels.cpu().numpy())  

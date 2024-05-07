@@ -3,19 +3,22 @@ import numpy as np
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 import matplotlib.pyplot as plt
 import pandas as pd
-import loader_dino_9, loader_dino
-import model_dino_vit14b
-import model_resnet50
+import loader_dino_9
+import model_dino_vit14b_rein
 from torchmetrics.classification import MulticlassConfusionMatrix
 
-device = torch.device("cuda:5" if torch.cuda.is_available() else "cpu")
-model = model_dino_vit14b.CustomDINOV2(num_classes=9).to(device)
-# model = model_resnet50.ResNet50(num_classes=9).to(device)
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+model = model_dino_vit14b_rein.CustomDINOV2(num_classes=9).to(device)
+# model = model_resnet50_9.ResNet50(num_classes=9).to(device)
 test_loader = loader_dino_9.test_loader
 
-model_save_path = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/disease_multiclassclassification/checkpoints/9_saved_dinovit14b_finetune_weight_1e-5_0430/model_epoch_120_valloss_3.0238192772865293_valacc_0.4766666666666667.pth'
+model_save_path = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/disease_multiclassclassification/checkpoints/9_saved_dinovit14b_rein_weight_0502/model_epoch_162_valloss_3.839819409052531_valacc_0.41333333333333333.pth'
 checkpoint = torch.load(model_save_path)
 model.load_state_dict(checkpoint['model_state_dict'])
+
+model.eval()
+all_preds = []
+all_labels = []
 
 model.eval()
 all_preds = []
@@ -28,7 +31,9 @@ with torch.no_grad():
     for images, labels in test_loader:
         images = images.to(device)
         labels = labels.to(device)
-        outputs = model(images)
+        features = model.forward_features(images)
+        features = features[:, 0, :]
+        outputs = model.linear(features)
         preds = outputs.argmax(dim=1) 
         all_preds.append(preds.cpu().numpy())
         all_labels.append(labels.cpu().numpy())  
@@ -56,16 +61,14 @@ metrics_df_macro = pd.DataFrame({
     'F1-Score': [f1_macro],
     'Accuracy': [accuracy]
 }, index=['Macro Average'])
-metrics_df_micro = pd.DataFrame({
-    'Precision': [precision_micro],
-    'Recall': [recall_micro],
-    'F1-Score': [f1_micro],
-    'Accuracy': [accuracy]
-}, index=['Micro Average'])
+# metrics_df_micro = pd.DataFrame({
+#     'Precision': [precision_micro],
+#     'Recall': [recall_micro],
+#     'F1-Score': [f1_micro],
+#     'Accuracy': [accuracy]
+# }, index=['Micro Average'])
 
 print(metrics_df_macro)
-print(metrics_df_micro)
-
-
+# print(metrics_df_micro)
 
 

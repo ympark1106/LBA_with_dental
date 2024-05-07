@@ -3,11 +3,6 @@ from PIL import Image
 import os
 import random
 
-'''
-cropped_image_path = '/home/gpu/Workspace/youmin/Teeth_Image_Segmentation/LBA/not_K02_images'
-print("Number of cropped images:", len(os.listdir(cropped_image_path)))
-exit()
-'''
 
 def random_crop_teeth(json_path, image_root, output_folder, teeth_symbol, num_crops, margin):
     with open(json_path, 'r') as f:

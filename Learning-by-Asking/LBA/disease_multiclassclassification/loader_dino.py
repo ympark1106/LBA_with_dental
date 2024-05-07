@@ -63,8 +63,9 @@ def split_data(parent_dir, categories, split_ratios):
     return train_files, np.array(train_labels), val_files, np.array(val_labels), test_files, np.array(test_labels)
 
 parent_dir = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/cropped_images/margin150_unique'
-categories = ['cropped_K00_images', 'cropped_K01_images', 'cropped_K02_images', 'cropped_K03_images', #'cropped_K04_images', 'cropped_K05_images', 
-                'cropped_K07_images', #'cropped_K08_images',
+categories = ['cropped_K00_images', 'cropped_K01_images', 'cropped_K02_images',
+ # 'cropped_K03_images', 'cropped_K04_images', 
+'cropped_K05_images', 'cropped_K07_images', 'cropped_K08_images',
                 'cropped_K09_images']
 
               

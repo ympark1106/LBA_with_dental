@@ -2,11 +2,9 @@ import os
 import time
 import argparse
 import warnings
-
 warnings.filterwarnings(action='ignore')
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
-os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
-
+os.environ['CUDA_LAUNCH_BLOCKING'] = "0"
 import torch
 
 from loader.panorama_coco import CocoDataset, collate_fn
@@ -30,11 +28,9 @@ def main(exp_name, args):
     args.device = torch.device(f'cuda:{GPU_NUM}' if torch.cuda.is_available() else 'cpu')
     # args.device = torch.device("cpu")
     
-    root = "/mnt/d/Datasets/panorama_dataset/Group1/images"
-    json_path = "/mnt/d/Datasets/panorama_dataset/Group1/annotations/instances.json"
-    
-    # root = "/mnt/d/Datasets/ToothInstanceSegmentation/imgs/v1/"
-    # json_path = "/mnt/d/Datasets/ToothInstanceSegmentation/annotations/v1/train_coco_inst_teeth.json"
+    root = "/home/gpu/Workspace/youmin/Learning-by-Asking/new_panorama_coco_dataset/images" 
+    json_path = "/home/gpu/Workspace/youmin/Learning-by-Asking/new_panorama_coco_dataset/annotations/instances.json"
+
     
     train_dataset = CocoDataset(root=root, json=json_path, train=True)
     print("train_dataset size : {}".format(train_dataset.__len__()))
@@ -42,7 +38,6 @@ def main(exp_name, args):
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, pin_memory=False,num_workers=4, shuffle=True, collate_fn=collate_fn)
     
     num_classes = len(train_dataset.class_cate)
-    # num_classes = 7
     model = dental(num_classes=num_classes).to(args.device)
     parameters = [p for p in model.parameters() if p.requires_grad]
 

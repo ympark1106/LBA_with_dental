@@ -4,8 +4,8 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose, Resize, ToTensor, Normalize, ColorJitter, RandomHorizontalFlip, RandomRotation
-import loader_dino_9, loader_dino   # 수정
-import model_dino_vit14b_rein  # 수정
+import loader_dino  # 수정
+import model_resnet50_7   # 수정
 from torchmetrics.classification import MulticlassConfusionMatrix
 # from utils import EarlyStopping  
 from torch.utils.data import random_split
@@ -13,7 +13,7 @@ from torch.utils.data import random_split
 import matplotlib.pyplot as plt
 from PIL import Image
 
-device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:5" if torch.cuda.is_available() else "cpu")
 
 transform = Compose([
     Resize((224, 224)),  
@@ -24,47 +24,43 @@ transform = Compose([
 
 parent_dir = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/cropped_images/margin150_unique'
 categories = ['cropped_K00_images', 'cropped_K01_images', 'cropped_K02_images', 
-'cropped_K03_images', 'cropped_K04_images', 
-                    'cropped_K05_images', 'cropped_K07_images', 'cropped_K08_images', 'cropped_K09_images']
+#'cropped_K03_images', 'cropped_K04_images', 
+'cropped_K05_images', 'cropped_K07_images', 'cropped_K08_images','cropped_K09_images'] 
+
 
 split_ratios = {'train': 0.7, 'val': 0.15, 'test': 0.15}
 
-train_files, train_labels, val_files, val_labels, test_files, test_labels = loader_dino_9.split_data(parent_dir, categories, split_ratios)
+train_files, train_labels, val_files, val_labels, test_files, test_labels = loader_dino.split_data(parent_dir, categories, split_ratios)
 
-train_dataset = loader_dino_9.TeethDataset(train_files, train_labels, transform, augment=True)
-val_dataset = loader_dino_9.TeethDataset(val_files, val_labels, transform, augment=False)
-test_dataset = loader_dino_9.TeethDataset(test_files, test_labels, transform, augment=False)
+train_dataset = loader_dino.TeethDataset(train_files, train_labels, transform, augment=True)
+val_dataset = loader_dino.TeethDataset(val_files, val_labels, transform, augment=False)
+test_dataset = loader_dino.TeethDataset(test_files, test_labels, transform, augment=False)
 
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
-model = model_dino_vit14b_rein.CustomDINOV2(num_classes=9, depth=12, embed_dim=768, patch_size=16).to(device) # 수정
-print(model)
-
 max_epoch = 200
+
+model = model_resnet50_7.ResNet50(num_classes=7).to(device)  
 
 class_counts = torch.zeros(len(categories), dtype=torch.int64)
 for _, labels in train_loader:
     for label in labels:
         class_counts[label] += 1
-# print(class_counts)
 
 max_count = float(class_counts.max())
 weights = max_count / class_counts
 weights_tensor = weights.float().to(device)
-# print(weights_tensor)
-criterion = nn.CrossEntropyLoss(weight=weights_tensor) 
-# criterion = nn.CrossEntropyLoss() 
-# lr_decay = [int(0.5*max_epoch), int(0.75*max_epoch), int(0.9*max_epoch)]
-lr_decay = [int(0.375*max_epoch), int(0.5*max_epoch), int(0.75*max_epoch)]
+
+criterion = nn.CrossEntropyLoss(weight=weights_tensor)
+lr_decay = [int(0.5*max_epoch), int(0.75*max_epoch), int(0.9*max_epoch)]
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay = 1e-5)
 scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, lr_decay)
+# criterion = nn.CrossEntropyLoss()
+# optimizer = Adam(model.parameters(), lr=0.001)
 # optimizer = Adam(model.parameters(), lr=0.000005)
-confmat = MulticlassConfusionMatrix(num_classes=9) # 수정 필요
-
-
-
+confmat = MulticlassConfusionMatrix(num_classes=7) # 수정 필요
 
 def evaluate_model(model, dataloader, criterion, device, confmat=None):
     model.eval()
@@ -78,13 +74,10 @@ def evaluate_model(model, dataloader, criterion, device, confmat=None):
     with torch.no_grad():
         for images, labels in dataloader:
             images, labels = images.to(device), labels.to(device)
-
-            features = model.forward_features(images)
-            features = features[:, 0, :]
-
-            outputs = model.linear(features)
+            outputs = model(images)
             loss = criterion(outputs, labels)
             preds = outputs.argmax(dim=1)
+
 
             running_loss += loss.item() * images.size(0)
             corrects += (preds == labels).sum().item()
@@ -102,10 +95,7 @@ def print_confusion_matrix(confmat):
     print(cm)
     confmat.reset() 
 
-
-
-
-model_save_directory = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/disease_multiclassclassification/checkpoints/9_saved_dinovit14b_rein_weight_0502' # 'saved_dinovit14b
+model_save_directory = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/disease_multiclassclassification/checkpoints/7_saved_resnet50_weight_0502' # 'saved_dinovit14b
 if not os.path.exists(model_save_directory):
     os.makedirs(model_save_directory)
 
@@ -120,10 +110,7 @@ for epoch in range(max_epoch):
 
         optimizer.zero_grad()
 
-        features = model.forward_features(images)
-        features = features[:, 0, :]
-
-        outputs = model.linear(features)
+        outputs = model(images)
         preds = outputs.argmax(dim=1)
         loss = criterion(outputs, labels)
         loss.backward()
@@ -138,8 +125,9 @@ for epoch in range(max_epoch):
     epoch_acc = float(corrects) / total
 
     val_loss, val_acc = evaluate_model(model, val_loader, criterion, device, confmat)
+
   
-    val_confmat = MulticlassConfusionMatrix(num_classes=9) # 수정
+    val_confmat = MulticlassConfusionMatrix(num_classes=7)
     val_loss, val_acc = evaluate_model(model, val_loader, criterion, device, val_confmat)
     print("Validation Confusion Matrix:")
     print_confusion_matrix(val_confmat)
@@ -158,6 +146,7 @@ for epoch in range(max_epoch):
 
     # confmat.update(preds.int().clone().detach().cpu(), labels.int().to(device='cpu'))
     print(f"Epoch {epoch+1}, Loss: {epoch_loss:.4f}, Accuracy: {epoch_acc:.4f}, Val Loss: {val_loss:.4f}, Val Accuracy: {val_acc:.4f}")
+    print(scheduler.get_last_lr())
 
 # s = confmat.compute()
 # print(s)
@@ -167,7 +156,7 @@ final_model_path = os.path.join(model_save_directory, 'final_model.pth')
 torch.save(model.state_dict(), final_model_path)
 print(f"Model saved to {final_model_path}")
 
-test_confmat = MulticlassConfusionMatrix(num_classes=9)
+test_confmat = MulticlassConfusionMatrix(num_classes=7)
 test_loss, test_acc = evaluate_model(model, test_loader, criterion, device, test_confmat)
 print("Test Confusion Matrix:")
 print_confusion_matrix(test_confmat)

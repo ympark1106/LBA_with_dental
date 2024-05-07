@@ -4,16 +4,15 @@ from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_sc
 import matplotlib.pyplot as plt
 import pandas as pd
 import loader_dino_9, loader_dino
-import model_dino_vit14b
-import model_resnet50
+import model_dino_vit14b_7, model_resnet50
 from torchmetrics.classification import MulticlassConfusionMatrix
 
 device = torch.device("cuda:5" if torch.cuda.is_available() else "cpu")
-model = model_dino_vit14b.CustomDINOV2(num_classes=9).to(device)
-# model = model_resnet50.ResNet50(num_classes=9).to(device)
-test_loader = loader_dino_9.test_loader
+model = model_dino_vit14b_7.CustomDINOV2(num_classes=7).to(device)
+# model = model_resnet50.ResNet50(num_classes=7).to(device)
+test_loader = loader_dino.test_loader
 
-model_save_path = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/disease_multiclassclassification/checkpoints/9_saved_dinovit14b_finetune_weight_1e-5_0430/model_epoch_120_valloss_3.0238192772865293_valacc_0.4766666666666667.pth'
+model_save_path = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/disease_multiclassclassification/checkpoints/7_saved_dinovit14b_finetune_weight_1e-5_0501/model_epoch_118_valloss_3.5511578434392024_valacc_0.49473684210526314.pth'
 checkpoint = torch.load(model_save_path)
 model.load_state_dict(checkpoint['model_state_dict'])
 
@@ -21,7 +20,7 @@ model.eval()
 all_preds = []
 all_labels = []
 
-confmat = MulticlassConfusionMatrix(num_classes=9).to(device)
+confmat = MulticlassConfusionMatrix(num_classes=7).to(device)
 confmat.reset()
 
 with torch.no_grad():
