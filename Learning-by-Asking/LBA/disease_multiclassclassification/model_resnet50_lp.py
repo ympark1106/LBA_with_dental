@@ -5,7 +5,7 @@ from torchvision import models
 from torchvision.models import resnet50, ResNet50_Weights
 
 class ResNet50(nn.Module):
-    def __init__(self, num_classes=7): # 수정 필요
+    def __init__(self, num_classes=9): # 수정 필요
         super(ResNet50, self).__init__()
         weights = ResNet50_Weights.DEFAULT  
         self.model = resnet50(weights=weights)
@@ -17,8 +17,11 @@ class ResNet50(nn.Module):
         return self.model(x)
     
 model = ResNet50()
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+# print(model)
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-model.to(device)
+for name, param in model.named_parameters():
+    param.requires_grad = False
+
+for name, param in model.named_parameters():
+    if "fc" in name:
+        param.requires_grad = True

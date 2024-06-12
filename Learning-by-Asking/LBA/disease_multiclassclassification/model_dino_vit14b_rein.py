@@ -15,6 +15,7 @@ class CustomDINOV2(nn.Module):
             embed_dims = embed_dim,
             patch_size = patch_size,
         )
+
         self.linear = nn.Linear(embed_dim, num_classes) 
 
     def forward_features(self, x, masks=None):
@@ -36,12 +37,6 @@ class CustomDINOV2(nn.Module):
         x = self.forward_features(x)
         x = self.linear(x)
         return x
-
-
-    # def forward(self, x):
-    #     x = self.transformer(x)
-    #     x = self.linear(x)
-    #     return x
     
     def train(self, mode: bool = True):
         if not mode:
@@ -49,3 +44,10 @@ class CustomDINOV2(nn.Module):
         set_requires_grad(self, ["reins", "linear"])
         set_train(self, ["reins", "linear"])
 
+model = CustomDINOV2(num_classes=9, depth=12, embed_dim=768, patch_size=16).to(device)
+
+def count_trainable_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+trainable_params = count_trainable_parameters(model)
+print(f"Trainable parameters: {trainable_params}")

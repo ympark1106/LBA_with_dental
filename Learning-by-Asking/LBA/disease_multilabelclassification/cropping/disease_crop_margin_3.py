@@ -42,8 +42,7 @@ def find_decay_teeth(json_path, image_root, output_folder, teeth_category_symbol
                             crop_and_save(image_path, output_path, bbox_tooth)
 
 
-def bbox_widen(bbox, margin):
-    x, y, width, height = bbox
+
 def bbox_widen(bbox, margin):
     x, y, width, height = bbox
     x -= margin

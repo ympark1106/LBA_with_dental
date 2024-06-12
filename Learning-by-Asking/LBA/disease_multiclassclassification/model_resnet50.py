@@ -16,9 +16,9 @@ class ResNet50(nn.Module):
     def forward(self, x):
         return self.model(x)
     
-model = ResNet50()
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+# model = ResNet50()
+# criterion = nn.CrossEntropyLoss()
+# optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-model.to(device)
+# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+# model.to(device)

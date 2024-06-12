@@ -29,5 +29,5 @@ def remove_duplicate_images(root_dir):
         print(f"{file}: {count}개 삭제됨.")
 
 # 실행 예제
-root_dir = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/cropped_images/margin150_unique'  # 데이터셋이 위치한 최상위 디렉토리 경로
+root_dir = '/home/gpu/Workspace/youmin/Learning-by-Asking/LBA/cropped_disease_images_unique'  # 데이터셋이 위치한 최상위 디렉토리 경로
 remove_duplicate_images(root_dir)
